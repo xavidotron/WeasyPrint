@@ -332,14 +332,22 @@ def draw_background_image(stream, layer, image_rendering):
         # We don't use a pattern when we don't need to because some viewers
         # (e.g., Preview on Mac) introduce unnecessary pixelation when vector
         # images are used in patterns.
-        if not layer.unbounded:
-            stream.rectangle(painting_x, painting_y, painting_width,
-                             painting_height)
+        with stacked(stream):
+            if not layer.unbounded:
+                stream.rectangle(painting_x, painting_y, painting_width,
+                                 painting_height)
+                stream.clip()
+                stream.end()
+            # We must clip to the image dimensions as well because image.draw()
+            # may draw outside them e.g. for gradients.
+            stream.rectangle(position_x + positioning_x,
+                             position_y + positioning_y,
+                             image_width, image_height)
             stream.clip()
             stream.end()
-        stream.transform(e=position_x + positioning_x,
-                         f=position_y + positioning_y)
-        layer.image.draw(stream, image_width, image_height, image_rendering)
+            stream.transform(e=position_x + positioning_x,
+                             f=position_y + positioning_y)
+            layer.image.draw(stream, image_width, image_height, image_rendering)
         return
 
     if repeat_x == 'no-repeat':
