@@ -9,6 +9,7 @@ from .percent import resolve_one_percentage, resolve_percentages
 from .preferred import max_content_width, min_content_width
 from .table import find_in_flow_baseline
 
+
 class FlexLine(list):
     pass
 
@@ -241,7 +242,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
     else:
         if box.style['height'] != 'auto':
             if box.style['height'].unit == '%' and parent_box.height != 'auto':
-                box.height = box.style['height'].value / 100. * parent_box.height
+                box.height = box.style['height'].value / 100. * containing_block.height
             else:
                 box.height = box.style['height'].value
         else:
