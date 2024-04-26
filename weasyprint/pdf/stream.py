@@ -1,7 +1,6 @@
 """PDF stream."""
 
 import io
-from functools import lru_cache
 from hashlib import md5
 
 import pydyf
@@ -13,19 +12,13 @@ from ..logger import LOGGER
 from ..matrix import Matrix
 from ..text.constants import PANGO_STRETCH_PERCENT
 from ..text.ffi import ffi, harfbuzz, pango, units_to_double
+from ..text.fonts import get_hb_face_data, get_pango_font_hb_face, get_pango_font_key
 
 
 class Font:
     def __init__(self, pango_font):
-        hb_font = pango.pango_font_get_hb_font(pango_font)
-        hb_face = harfbuzz.hb_font_get_face(hb_font)
-        hb_blob = ffi.gc(
-            harfbuzz.hb_face_reference_blob(hb_face),
-            harfbuzz.hb_blob_destroy)
-        with ffi.new('unsigned int *') as length:
-            hb_data = harfbuzz.hb_blob_get_data(hb_blob, length)
-            self.file_content = ffi.unpack(hb_data, int(length[0]))
-        self.index = harfbuzz.hb_face_get_index(hb_face)
+        hb_face = get_pango_font_hb_face(pango_font)
+        self.file_content = get_hb_face_data(hb_face)
 
         pango_metrics = pango.pango_font_get_metrics(pango_font, ffi.NULL)
         self.description = description = ffi.gc(
@@ -88,18 +81,17 @@ class Font:
 
         # Fonttools
         full_font = io.BytesIO(self.file_content)
+        index = harfbuzz.hb_face_get_index(hb_face)
         try:
-            self.ttfont = TTFont(full_font, fontNumber=self.index)
+            self.ttfont = TTFont(full_font, fontNumber=index)
         except Exception:
             LOGGER.warning('Unable to read font')
             self.ttfont = None
             self.bitmap = False
         else:
             self.bitmap = (
-                'EBDT' in self.ttfont and
-                'EBLC' in self.ttfont and (
-                    'glyf' not in self.ttfont or
-                    not self.ttfont['glyf'].glyphs))
+                'EBDT' in self.ttfont and 'EBLC' in self.ttfont and (
+                    'glyf' not in self.ttfont or not self.ttfont['glyf'].glyphs))
 
         # Various properties
         self.italic_angle = 0  # TODO: this should be different
@@ -118,9 +110,6 @@ class Font:
             self.flags += 2 ** (7 - 1)  # Italic
         if b'Serif' in fields:
             self.flags += 2 ** (2 - 1)  # Serif
-        widths = self.widths.values()
-        if len(widths) > 1 and len(set(widths)) == 1:
-            self.flags += 2 ** (1 - 1)  # FixedPitch
 
     def clean(self, cmap, hinting):
         if self.ttfont is None:
@@ -333,15 +322,8 @@ class Stream(pydyf.Stream):
             'BM': f'/{mode}',
         }))
 
-    @lru_cache()
     def add_font(self, pango_font):
-        description = pango.pango_font_describe(pango_font)
-        mask = (
-            pango.PANGO_FONT_MASK_SIZE +
-            pango.PANGO_FONT_MASK_GRAVITY)
-        pango.pango_font_description_unset_fields(description, mask)
-        key = pango.pango_font_description_hash(description)
-        pango.pango_font_description_free(description)
+        key = get_pango_font_key(pango_font)
         if key not in self._fonts:
             self._fonts[key] = Font(pango_font)
         return self._fonts[key]

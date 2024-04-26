@@ -2,8 +2,7 @@
 
 import pytest
 
-from ..testing_utils import (
-    FakeHTML, assert_no_logs, capture_logs, resource_path)
+from ..testing_utils import FakeHTML, assert_no_logs, capture_logs, resource_path
 
 centered_image = '''
     ________
@@ -435,6 +434,18 @@ def test_images_in_inline_block(assert_pixels):
       <div style="display: inline-block">
         <p><img src=pattern.png></p>
       </div>''')
+
+
+@assert_no_logs
+def test_images_transparent_text(assert_pixels):
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/2131
+    assert_pixels(centered_image, '''<style>
+        @page { size: 8px }
+        body { margin: 2px 0 0 2px; font-size: 2px; line-height: 0 }
+      </style>
+      <div style="color: #0001">123</div>
+      <img src=pattern.png>
+    ''')
 
 
 @assert_no_logs

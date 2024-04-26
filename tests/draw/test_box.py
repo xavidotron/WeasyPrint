@@ -3,6 +3,7 @@
 import itertools
 
 import pytest
+
 from weasyprint import HTML
 
 from ..testing_utils import assert_no_logs
@@ -275,9 +276,7 @@ def test_draw_split_border_radius(assert_pixels):
 
 
 @assert_no_logs
-def test_border_image(assert_pixels):
-    # Shows default "stretch" behavior for border images.
-    # Note that we use a svg image to avoid antialiasing.
+def test_border_image_stretch(assert_pixels):
     assert_pixels('''
         __________
         _RYYYMMMG_
@@ -335,9 +334,7 @@ def test_border_image_fill(assert_pixels):
 
 
 @assert_no_logs
-def test_border_image_default_sllice(assert_pixels):
-    # By default, border-image-slice is 100%, so the whole image is in the
-    # four corners and nothing is in-between.
+def test_border_image_default_slice(assert_pixels):
     assert_pixels('''
         _____________
         _RYMG___RYMG_
@@ -418,6 +415,130 @@ def test_border_image_not_percent(assert_pixels):
           border: 1px solid black;
           border-image-source: url(border.svg);
           border-image-slice: 1;
+          height: 4px;
+          margin: 1px;
+          width: 6px;
+        }
+      </style>
+      <div></div>
+    ''')
+
+
+@assert_no_logs
+def test_border_image_repeat(assert_pixels):
+    assert_pixels('''
+        ___________
+        _RYMYMYMYG_
+        _M_______C_
+        _Y_______Y_
+        _M_______C_
+        _Y_______Y_
+        _BYCYCYCYK_
+        ___________
+    ''', '''
+      <style>
+        @page {
+          size: 11px 8px;
+        }
+        div {
+          border: 1px solid black;
+          border-image-source: url(border.svg);
+          border-image-slice: 25%;
+          border-image-repeat: repeat;
+          height: 4px;
+          margin: 1px;
+          width: 7px;
+        }
+      </style>
+      <div></div>
+    ''')
+
+
+@assert_no_logs
+def test_border_image_space(assert_pixels):
+    assert_pixels('''
+        _________
+        _R_YMC_G_
+        _________
+        _M_____C_
+        _Y_____Y_
+        _C_____M_
+        _________
+        _B_YCM_K_
+        _________
+    ''', '''
+      <style>
+        @page {
+          size: 9px 9px;
+        }
+        div {
+          border: 1px solid black;
+          border-image-source: url(border2.svg);
+          border-image-slice: 20%;
+          border-image-repeat: space;
+          height: 5px;
+          margin: 1px;
+          width: 5px;
+        }
+      </style>
+      <div></div>
+    ''')
+
+
+@assert_no_logs
+def test_border_image_outset(assert_pixels):
+    assert_pixels('''
+        ____________
+        _RYYYYMMMMG_
+        _M________C_
+        _M_bbbbbb_C_
+        _M_bbbbbb_C_
+        _Y_bbbbbb_Y_
+        _Y_bbbbbb_Y_
+        _Y________Y_
+        _BYYYYCCCCK_
+        ____________
+    ''', '''
+      <style>
+        @page {
+          size: 12px 10px;
+        }
+        div {
+          border: 1px solid black;
+          border-image-source: url(border.svg);
+          border-image-slice: 25%;
+          border-image-outset: 2px;
+          height: 2px;
+          margin: 3px;
+          width: 4px;
+          background: #000080
+        }
+      </style>
+      <div></div>
+    ''')
+
+
+@assert_no_logs
+def test_border_image_width(assert_pixels):
+    assert_pixels('''
+        __________
+        _RRYYMMGG_
+        _RRYYMMGG_
+        _MM____CC_
+        _YY____YY_
+        _BBYYCCKK_
+        _BBYYCCKK_
+        __________
+    ''', '''
+      <style>
+        @page {
+          size: 10px 8px;
+        }
+        div {
+          border: 1px solid black;
+          border-image-source: url(border.svg);
+          border-image-slice: 25%;
+          border-image-width: 2;
           height: 4px;
           margin: 1px;
           width: 6px;

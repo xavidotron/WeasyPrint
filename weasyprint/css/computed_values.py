@@ -10,8 +10,7 @@ from ..text.ffi import ffi, pango, units_to_double
 from ..text.line_break import Layout, first_line_metrics
 from ..urls import get_link_attribute
 from .properties import INITIAL_VALUES, ZERO_PIXELS, Dimension
-from .utils import (
-    ANGLE_TO_RADIANS, LENGTH_UNITS, LENGTHS_TO_PIXELS, safe_urljoin)
+from .utils import ANGLE_TO_RADIANS, LENGTH_UNITS, LENGTHS_TO_PIXELS, safe_urljoin
 
 # Value in pixels of font-size for <absolute-size> keywords: 12pt (16px) for
 # medium, and scaling factors given in CSS3 for others:
@@ -360,6 +359,69 @@ def border_width(style, name, value):
         return value
 
     return length(style, name, value, pixels_only=True)
+
+
+@register_computer('border-image-slice')
+def border_image_slice(style, name, values):
+    """Compute the ``border-image-slice`` property."""
+    computed_values = []
+    fill = None
+    for value in values:
+        if value == 'fill':
+            fill = value
+        else:
+            number, unit = value
+            if unit is None:
+                computed_values.append(number)
+            else:
+                computed_values.append(Dimension(min(number, 100), '%'))
+    if len(computed_values) == 1:
+        computed_values *= 4
+    elif len(computed_values) == 2:
+        computed_values *= 2
+    elif len(computed_values) == 3:
+        computed_values.append(computed_values[1])
+    return (*computed_values, fill)
+
+
+@register_computer('border-image-width')
+def border_image_width(style, name, values):
+    """Compute the ``border-image-width`` property."""
+    computed_values = []
+    for value in values:
+        if value == 'auto':
+            computed_values.append(value)
+        else:
+            number, unit = value
+            computed_values.append(number if unit is None else value)
+    if len(computed_values) == 1:
+        computed_values *= 4
+    elif len(computed_values) == 2:
+        computed_values *= 2
+    elif len(computed_values) == 3:
+        computed_values.append(computed_values[1])
+    return tuple(computed_values)
+
+
+@register_computer('border-image-outset')
+def border_image_outset(style, name, values):
+    """Compute the ``border-image-outset`` property."""
+    computed_values = [
+        value if isinstance(value, (int, float)) else length(style, name, value)
+        for value in values]
+    if len(computed_values) == 1:
+        computed_values *= 4
+    elif len(computed_values) == 2:
+        computed_values *= 2
+    elif len(computed_values) == 3:
+        computed_values.append(computed_values[1])
+    return tuple(computed_values)
+
+
+@register_computer('border-image-repeat')
+def border_image_repeat(style, name, values):
+    """Compute the ``border-image-repeat`` property."""
+    return (values * 2) if len(values) == 1 else values
 
 
 @register_computer('column-width')

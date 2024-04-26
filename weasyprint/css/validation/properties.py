@@ -10,7 +10,8 @@ from tinycss2.color3 import parse_color
 
 from .. import computed_values
 from ..properties import KNOWN_PROPERTIES, ZERO_PIXELS, Dimension
-from ..utils import (
+
+from ..utils import (  # isort:skip
     InvalidValues, Pending, check_var_function, comma_separated_list,
     get_angle, get_content_list, get_content_list_token, get_custom_ident,
     get_image, get_keyword, get_length, get_resolution, get_single_keyword,
@@ -166,9 +167,8 @@ def color(token):
 @comma_separated_list
 @single_token
 def background_image(token, base_url):
-    if token.type != 'function':
-        if get_keyword(token) == 'none':
-            return 'none', None
+    if get_keyword(token) == 'none':
+        return 'none', None
     return get_image(token, base_url)
 
 
@@ -423,74 +423,70 @@ def border_width(token):
 @property(wants_base_url=True)
 @single_token
 def border_image_source(token, base_url):
-    if token.type not in ('function', 'url'):
-        if get_keyword(token) == 'none':
-            return 'none', None
+    if get_keyword(token) == 'none':
+        return 'none', None
     return get_image(token, base_url)
 
 
 @property()
 def border_image_slice(tokens):
     values = []
-    keyword_cnt = 0
-    for token in tokens:
+    fill = False
+    for i, token in enumerate(tokens):
         # Don't use get_length() because a dimension with a unit is disallowed.
         if token.type == 'percentage' and token.value >= 0:
-            values.append(Dimension(min(token.value, 100), '%'))
-        elif token.type == 'number':
-            values.append(token.value)
-        elif get_keyword(token) == 'fill':
-            keyword_cnt += 1
+            values.append(Dimension(token.value, '%'))
+        elif token.type == 'number' and token.value >= 0:
+            values.append(Dimension(token.value, None))
+        elif get_keyword(token) == 'fill' and not fill and i in (0, len(tokens) - 1):
+            fill = True
+            values.append('fill')
         else:
-            return None
-    if keyword_cnt > 0:
-        # Always put it at the beginning to make processing easier.
-        # Would it be better to use some sort of object here?
-        values = ['fill'] + values
-    if keyword_cnt <= 1 and (1 <= len(values) - keyword_cnt <= 4):
-        return values
+            return
+
+    if 1 <= len(values) - int(fill) <= 4:
+        return tuple(values)
 
 
 @property()
 def border_image_width(tokens):
-    if get_single_keyword(tokens) == 'auto':
-        return 'auto'
     values = []
     for token in tokens:
-        if token.type == 'number' and token.value >= 0:
-            values.append(token.value)
+        if get_keyword(token) == 'auto':
+            values.append('auto')
+        elif token.type == 'number' and token.value >= 0:
+            values.append(Dimension(token.value, None))
         else:
-            length = get_length(token, negative=False, percentage=True)
-            if length:
+            if length := get_length(token, negative=False, percentage=True):
                 values.append(length)
             else:
-                return None
+                return
+
     if 1 <= len(values) <= 4:
-        return values
+        return tuple(values)
 
 
 @property()
 def border_image_outset(tokens):
     values = []
     for token in tokens:
-        if token.type == 'number':
-            values.append(token.value)
+        if token.type == 'number' and token.value >= 0:
+            values.append(Dimension(token.value, None))
         else:
-            length = get_length(token)
-            if length:
+            if length := get_length(token, negative=False):
                 values.append(length)
             else:
-                return None
+                return
+
     if 1 <= len(values) <= 4:
-        return values
+        return tuple(values)
 
 
 @property()
 def border_image_repeat(tokens):
     if 1 <= len(tokens) <= 2:
         keywords = tuple(get_keyword(token) for token in tokens)
-        if all(kw in ('stretch', 'repeat', 'round', 'space')
-               for kw in keywords):
+        if set(keywords) <= {'stretch', 'repeat', 'round', 'space'}:
             return keywords
 
 
@@ -786,8 +782,8 @@ def font_variant_ligatures(tokens):
         if token.type != 'ident':
             return None
         if token.value in all_values:
-            concurrent_values = [
-                couple for couple in couples if token.value in couple][0]
+            concurrent_values = next(
+                couple for couple in couples if token.value in couple)
             if any(value in values for value in concurrent_values):
                 return None
             else:
@@ -831,8 +827,8 @@ def font_variant_numeric(tokens):
         if token.type != 'ident':
             return None
         if token.value in all_values:
-            concurrent_values = [
-                couple for couple in couples if token.value in couple][0]
+            concurrent_values = next(
+                couple for couple in couples if token.value in couple)
             if any(value in values for value in concurrent_values):
                 return None
             else:
@@ -901,8 +897,8 @@ def font_variant_east_asian(tokens):
         if token.type != 'ident':
             return None
         if token.value in all_values:
-            concurrent_values = [
-                couple for couple in couples if token.value in couple][0]
+            concurrent_values = next(
+                couple for couple in couples if token.value in couple)
             if any(value in values for value in concurrent_values):
                 return None
             else:
