@@ -400,6 +400,130 @@ def test_border_radius_invalid(rule, message):
 
 @assert_no_logs
 @pytest.mark.parametrize('rule, result', (
+    ('url(border.png) 27', {
+        'border_image_source': ('url', 'https://weasyprint.org/foo/border.png'),
+        'border_image_slice': ((27, None),),
+    }),
+    ('url(border.png) 10 / 4 / 2 round stretch', {
+        'border_image_source': ('url', 'https://weasyprint.org/foo/border.png'),
+        'border_image_slice': ((10, None),),
+        'border_image_width': ((4, None),),
+        'border_image_outset': ((2, None),),
+        'border_image_repeat': (('round', 'stretch')),
+    }),
+    ('10 // 2', {
+        'border_image_slice': ((10, None),),
+        'border_image_outset': ((2, None),),
+    }),
+    ('5.5%', {
+        'border_image_slice': ((5.5, '%'),),
+    }),
+    ('stretch 2 url("border.png")', {
+        'border_image_source': ('url', 'https://weasyprint.org/foo/border.png'),
+        'border_image_slice': ((2, None),),
+        'border_image_repeat': (('stretch',)),
+    }),
+    ('1/2 round', {
+        'border_image_slice': ((1, None),),
+        'border_image_width': ((2, None),),
+        'border_image_repeat': (('round',)),
+    }),
+    ('none', {
+        'border_image_source': ('none', None),
+    }),
+))
+def test_border_image(rule, result):
+    assert expand_to_dict(f'border-image: {rule}') == result
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, reason', (
+    ('url(border.png) url(border.png)', 'multiple source'),
+    ('10 10 10 10 10', 'multiple slice'),
+    ('1 / 2 / 3 / 4', 'invalid'),
+    ('/1', 'invalid'),
+    ('/1', 'invalid'),
+    ('round round round', 'invalid'),
+    ('-1', 'invalid'),
+    ('1 repeat 2', 'multiple slice'),
+    ('1% // 1%', 'invalid'),
+    ('1 / repeat', 'invalid'),
+    ('', 'no value'),
+))
+def test_border_image_invalid(rule, reason):
+    assert_invalid(f'border-image: {rule}', reason)
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, result', (
+    ('url(border.png) 27', {
+        'mask_border_source': ('url', 'https://weasyprint.org/foo/border.png'),
+        'mask_border_slice': ((27, None),),
+    }),
+    ('url(border.png) 10 / 4 / 2 round stretch', {
+        'mask_border_source': ('url', 'https://weasyprint.org/foo/border.png'),
+        'mask_border_slice': ((10, None),),
+        'mask_border_width': ((4, None),),
+        'mask_border_outset': ((2, None),),
+        'mask_border_repeat': (('round', 'stretch')),
+    }),
+    ('10 // 2', {
+        'mask_border_slice': ((10, None),),
+        'mask_border_outset': ((2, None),),
+    }),
+    ('5.5%', {
+        'mask_border_slice': ((5.5, '%'),),
+    }),
+    ('stretch 2 url("border.png")', {
+        'mask_border_source': ('url', 'https://weasyprint.org/foo/border.png'),
+        'mask_border_slice': ((2, None),),
+        'mask_border_repeat': (('stretch',)),
+    }),
+    ('1/2 round', {
+        'mask_border_slice': ((1, None),),
+        'mask_border_width': ((2, None),),
+        'mask_border_repeat': (('round',)),
+    }),
+    ('none', {
+        'mask_border_source': ('none', None),
+    }),
+    ('url(border.png) 27 alpha', {
+        'mask_border_source': ('url', 'https://weasyprint.org/foo/border.png'),
+        'mask_border_slice': ((27, None),),
+        'mask_border_mode': 'alpha',
+    }),
+    ('url(border.png) 27 luminance', {
+        'mask_border_source': ('url', 'https://weasyprint.org/foo/border.png'),
+        'mask_border_slice': ((27, None),),
+        'mask_border_mode': 'luminance',
+    }),
+))
+def test_mask_border(rule, result):
+    assert expand_to_dict(f'mask-border: {rule}') == result
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, reason', (
+    ('url(border.png) url(border.png)', 'multiple source'),
+    ('10 10 10 10 10', 'multiple slice'),
+    ('1 / 2 / 3 / 4', 'invalid'),
+    ('/1', 'invalid'),
+    ('/1', 'invalid'),
+    ('round round round', 'invalid'),
+    ('-1', 'invalid'),
+    ('1 repeat 2', 'multiple slice'),
+    ('1% // 1%', 'invalid'),
+    ('1 / repeat', 'invalid'),
+    ('', 'no value'),
+    ('alpha alpha', 'multiple mode'),
+    ('alpha luminance', 'multiple mode'),
+))
+def test_mask_border_invalid(rule, reason):
+    assert_invalid(f'mask-border: {rule}', reason)
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, result', (
     ('12px My Fancy Font, serif', {
         'font_size': (12, 'px'),
         'font_family': ('My Fancy Font', 'serif'),
@@ -565,6 +689,197 @@ def test_flex_flow(rule, result):
 ))
 def test_flex_flow_invalid(rule):
     assert_invalid(f'flex-flow: {rule}')
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, result', (
+    ('auto', {'start': 'auto', 'end': 'auto'}),
+    ('auto / auto', {'start': 'auto', 'end': 'auto'}),
+    ('4', {'start': (None, 4, None), 'end': 'auto'}),
+    ('c', {'start': (None, None, 'c'), 'end': (None, None, 'c')}),
+    ('4 / -4', {'start': (None, 4, None), 'end': (None, -4, None)}),
+    ('c / d', {'start': (None, None, 'c'), 'end': (None, None, 'd')}),
+    ('ab / cd 4', {'start': (None, None, 'ab'), 'end': (None, 4, 'cd')}),
+    ('ab 2 span', {'start': ('span', 2, 'ab'), 'end': 'auto'}),
+))
+def test_grid_column_row(rule, result):
+    assert expand_to_dict(f'grid-column: {rule}') == dict(
+        (f'grid_column_{key}', value) for key, value in result.items())
+    assert expand_to_dict(f'grid-row: {rule}') == dict(
+        (f'grid_row_{key}', value) for key, value in result.items())
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', (
+    'auto auto',
+    '4 / 2 / c',
+    'span',
+    '4 / span',
+    'c /',
+    '/4',
+    'col / 2.1',
+))
+def test_grid_column_row_invalid(rule):
+    assert_invalid(f'grid-column: {rule}')
+    assert_invalid(f'grid-row: {rule}')
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, result', (
+    ('auto', {
+        'row_start': 'auto', 'row_end': 'auto',
+        'column_start': 'auto', 'column_end': 'auto'}),
+    ('auto / auto', {
+        'row_start': 'auto', 'row_end': 'auto',
+        'column_start': 'auto', 'column_end': 'auto'}),
+    ('auto / auto / auto', {
+        'row_start': 'auto', 'row_end': 'auto',
+        'column_start': 'auto', 'column_end': 'auto'}),
+    ('auto / auto / auto / auto', {
+        'row_start': 'auto', 'row_end': 'auto',
+        'column_start': 'auto', 'column_end': 'auto'}),
+    ('1/c/2 d/span 2 ab', {
+        'row_start': (None, 1, None), 'column_start': (None, None, 'c'),
+        'row_end': (None, 2, 'd'), 'column_end': ('span', 2, 'ab')}),
+    ('1  /  c', {
+        'row_start': (None, 1, None), 'column_start': (None, None, 'c'),
+        'row_end': 'auto', 'column_end': (None, None, 'c')}),
+    ('a / c 2', {
+        'row_start': (None, None, 'a'), 'column_start': (None, 2, 'c'),
+        'row_end': (None, None, 'a'), 'column_end': 'auto'}),
+    ('a', {
+        'row_start': (None, None, 'a'), 'row_end': (None, None, 'a'),
+        'column_start': (None, None, 'a'), 'column_end': (None, None, 'a')}),
+    ('span 2', {
+        'row_start': ('span', 2, None), 'row_end': 'auto',
+        'column_start': 'auto', 'column_end': 'auto'}),
+))
+def test_grid_area(rule, result):
+    assert expand_to_dict(f'grid-area: {rule}') == dict(
+        (f'grid_{key}', value) for key, value in result.items())
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', (
+    'auto auto',
+    'auto / auto auto',
+    '4 / 2 / c / d / e',
+    'span',
+    '4 / span',
+    'c /',
+    '/4',
+    'c//4',
+    '/',
+    '1 / 2 / 4 / 0.5',
+))
+def test_grid_area_invalid(rule):
+    assert_invalid(f'grid-area: {rule}')
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, result', (
+    ('none', {
+        'rows': 'none', 'columns': 'none', 'areas': 'none',
+    }),
+    ('subgrid / [outer-edge] 20px [main-start]', {
+        'rows': ('subgrid', ()),
+        'columns': (('outer-edge',), (20, 'px'), ('main-start',)),
+        'areas': 'none',
+    }),
+    ('repeat(2, [e] 40px) repeat(5, auto) / subgrid [a] repeat(auto-fill, [b])', {
+        'rows': (
+            (), ('repeat()', 2, (('e',), (40, 'px'), ())), (),
+            ('repeat()', 5, ((), 'auto', ())), ()),
+        'columns': ('subgrid', (('a',), ('repeat()', 'auto-fill', (('b',),)))),
+        'areas': 'none',
+    }),
+    # TODO: support last syntax
+    # ('[a b] "x y y" [c] [d] "x y y" 1fr [e] / auto 2fr auto', {
+    #     'rows': 'none', 'columns': 'none', 'areas': 'none',
+    # }),
+    # ('[a b c] "x x x" 2fr', {
+    #     'rows': 'none', 'columns': 'none', 'areas': 'none',
+    # }),
+))
+def test_grid_template(rule, result):
+    assert expand_to_dict(f'grid-template: {rule}') == dict(
+        (f'grid_template_{key}', value) for key, value in result.items())
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', (
+    'none none',
+    'auto',
+    'subgrid / subgrid / subgrid',
+    '[a] 1px [b] / none /',
+    '[a] 1px [b] // none',
+    '[a] 1px [b] none',
+))
+def test_grid_template_invalid(rule):
+    assert_invalid(f'grid-template: {rule}')
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, result', (
+    ('none', {
+        'template_rows': 'none', 'template_columns': 'none',
+        'template_areas': 'none',
+        'auto_rows': ('auto',), 'auto_columns': ('auto',),
+        'auto_flow': ('row',),
+    }),
+    ('subgrid / [outer-edge] 20px [main-start]', {
+        'template_rows': ('subgrid', ()),
+        'template_columns': (('outer-edge',), (20, 'px'), ('main-start',)),
+        'template_areas': 'none',
+        'auto_rows': ('auto',), 'auto_columns': ('auto',),
+        'auto_flow': ('row',),
+    }),
+    ('repeat(2, [e] 40px) repeat(5, auto) / subgrid [a] repeat(auto-fill, [b])', {
+        'template_rows': (
+            (), ('repeat()', 2, (('e',), (40, 'px'), ())), (),
+            ('repeat()', 5, ((), 'auto', ())), ()),
+        'template_columns': ('subgrid', (('a',), ('repeat()', 'auto-fill', (('b',),)))),
+        'template_areas': 'none',
+        'auto_rows': ('auto',), 'auto_columns': ('auto',),
+        'auto_flow': ('row',),
+    }),
+    ('auto-flow 1fr / 100px', {
+        'template_rows': 'none', 'template_columns': ((), (100, 'px'), ()),
+        'template_areas': 'none',
+        'auto_rows': ((1, 'fr'),), 'auto_columns': ('auto',),
+        'auto_flow': ('row',),
+    }),
+    ('none / dense auto-flow 1fr', {
+        'template_rows': 'none', 'template_columns': 'none',
+        'template_areas': 'none',
+        'auto_rows': ('auto',), 'auto_columns': ((1, 'fr'),),
+        'auto_flow': ('column', 'dense'),
+    }),
+    # TODO: support last grid-template syntax
+    # ('[a b] "x y y" [c] [d] "x y y" 1fr [e] / auto 2fr auto', {
+    # }),
+    # ('[a b c] "x x x" 2fr', {
+    # }),
+))
+def test_grid(rule, result):
+    assert expand_to_dict(f'grid: {rule}') == dict(
+        (f'grid_{key}', value) for key, value in result.items())
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', (
+    'none none',
+    'auto',
+    'subgrid / subgrid / subgrid',
+    '[a] 1px [b] / none /',
+    '[a] 1px [b] // none',
+    '[a] 1px [b] none',
+    'none / auto-flow 1fr dense',
+    'none / dense 1fr auto-flow',
+    '100px auto-flow / none',
+    'dense 100px / auto-flow 1fr'
+))
+def test_grid_invalid(rule):
+    assert_invalid(f'grid: {rule}')
 
 
 @assert_no_logs

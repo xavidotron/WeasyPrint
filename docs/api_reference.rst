@@ -168,12 +168,12 @@ or through regular links with ``<a rel=attachment>`` to attach a resource that
 can be saved by clicking on said link. The ``title`` attribute can be used as
 description of the attachment.
 
-The generation of PDF/A documents (A-1b, A-2b, A-3b and A-4b) is supported.
-However, the generated documents are not guaranteed to be valid, and users have
-the responsibility to check that they follow the rules listed by the related
-specifications. The major rules to follow are to include a PDF identifier, to
-check the PDF version, and to avoid anti-aliasing for images using
-``image-rendering: crisp-edges``.
+The generation of PDF/A documents (A-1b, A-2b, A-3b, A-4b, A-2u, A-3u and A-4u) is
+supported. However, the generated documents are not guaranteed to be valid, and users
+have the responsibility to check that they follow the rules listed by the related
+specifications. The major rules to follow are to include a PDF identifier, to check the
+PDF version, and to avoid anti-aliasing for images using ``image-rendering:
+crisp-edges``.
 
 The generation of PDF/UA documents (UA-1) is supported. However, the generated
 documents are not guaranteed to be valid, and users have the responsibility to
@@ -558,10 +558,10 @@ background layers per box), including the ``background``, ``background-color``,
 WeasyPrint also supports the `rounded corners part`_ of this module, including
 the ``border-radius`` property.
 
-WeasyPrint does **not** support the `border images part`_ of this module,
-including the ``border-image``, ``border-image-source``,
-``border-image-slice``, ``border-image-width``, ``border-image-outset`` and
-``border-image-repeat`` properties.
+WeasyPrint also supports the `border images part`_ of this module, including the
+``border-image``, ``border-image-source``, ``border-image-slice``,
+``border-image-width``, ``border-image-outset`` and ``border-image-repeat``
+properties.
 
 WeasyPrint does **not** support the `box shadow part`_ of this module,
 including the ``box-shadow`` property. This feature has been implemented in a
@@ -756,6 +756,56 @@ All the ``flex-*``, ``align-*``, ``justify-*`` and ``order`` properties are
 supported. The ``flex`` and ``flex-flow`` shorthands are supported too.
 
 .. _CSS Flexible Box Layout Module Level 1: https://www.w3.org/TR/css-flexbox-1/
+
+CSS Grid Layout Module Level 2
+++++++++++++++++++++++++++++++
+
+The `CSS Grid Layout Module Level 2`_ "defines a two-dimensional grid-based layout
+system, optimized for user interface design".
+
+This module works for simple cases, but has some limitations. Here are
+non-exhaustive lists of supported/unsupported features.
+
+Supported:
+
+- ``display: grid``,
+- ``grid-auto-*``, ``grid-template-*`` and other ``grid-*`` properties,
+- ``grid`` and other ``grid-*`` shorthands,
+- flexible lengths (``fr`` unit),
+- line names,
+- grid areas,
+- auto rows and auto columns,
+- ``z-index``,
+- ``repeat(X, *)``,
+- ``minmax()``,
+- ``align-*`` and ``justify-*`` alignment properties,
+- ``gap`` and ``*-gap`` properties for gutters,
+- dense auto flow,
+- ``order``,
+- margins, borders, padding on grid containers and grid items,
+- fragmentation between rows.
+
+Unsupported or untested:
+
+- ``display: inline-grid``,
+- auto content size for grid containers,
+- ``grid-auto-flow: column``,
+- subgrids,
+- ``repeat(auto-fill, *)`` and ``repeat(auto-fit, *)``,
+- auto margins for grid items,
+- ``span`` with line names,
+- ``span`` for flexible tracks,
+- ``safe`` and ``unsafe`` alignments,
+- baseline alignment,
+- grid items with intrinsic size (images),
+- distribute space beyond limits,
+- grid items larger than grid containers,
+- ``min-width``, ``max-width``, ``min-height``, ``max-height`` on grid items,
+- complex ``min-content`` and ``max-content`` cases,
+- absolutely positioned and floating grid items,
+- fragmentation in rows.
+
+.. _CSS Grid Layout Module Level 2: https://www.w3.org/TR/css-grid-2/
 
 CSS Basic User Interface Module Level 3/4
 +++++++++++++++++++++++++++++++++++++++++

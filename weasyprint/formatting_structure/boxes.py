@@ -68,6 +68,7 @@ class Box:
     # Default, may be overriden on instances.
     is_table_wrapper = False
     is_flex_item = False
+    is_grid_item = False
     is_for_root_element = False
     is_column = False
     is_leader = False
@@ -334,6 +335,12 @@ class Box:
             if self.element.tag in ('button', 'input', 'select', 'textarea'):
                 return not isinstance(self, (LineBox, TextBox))
         return False
+
+    def is_form(self):
+        """Return whether this box is a form element."""
+        if self.element is None:
+            return False
+        return self.element.tag == 'form'
 
 
 class ParentBox(Box):
@@ -773,5 +780,25 @@ class InlineFlexBox(FlexContainerBox, InlineLevelBox):
     """A box that is both inline-level and a flex container.
 
     It behaves as inline on the outside and as a flex container on the inside.
+
+    """
+
+
+class GridContainerBox(ParentBox):
+    """A box that contains only grid-items."""
+
+
+class GridBox(GridContainerBox, BlockLevelBox):
+    """A box that is both block-level and a grid container.
+
+    It behaves as block on the outside and as a grid container on the inside.
+
+    """
+
+
+class InlineGridBox(GridContainerBox, InlineLevelBox):
+    """A box that is both inline-level and a grid container.
+
+    It behaves as inline on the outside and as a grid container on the inside.
 
     """

@@ -67,6 +67,12 @@ class RasterImage:
         self.ratio = (self.width / self.height) if self.height != 0 else inf
         self.optimize = optimize = options['optimize_images']
 
+        # The presence of the APP14 segment indicates an Adobe image with
+        # inverted CMYK data. Specify a Decode Array to invert it again back to
+        # normal. See https://github.com/Kozea/WeasyPrint/pull/2179.
+        app14 = getattr(original_pillow_image, 'app', {}).get('APP14')
+        self.invert_colors = self.mode == 'CMYK' and app14 is not None
+
         if pillow_image.format in ('JPEG', 'MPO'):
             self.format = 'JPEG'
             if image_data is None or optimize or jpeg_quality is not None:
@@ -150,6 +156,8 @@ class RasterImage:
         })
 
         if self.format == 'JPEG':
+            if self.invert_colors:
+                extra['Decode'] = pydyf.Array((1, 0) * 4)
             extra['Filter'] = '/DCTDecode'
             return pydyf.Stream([self.image_data], extra)
 

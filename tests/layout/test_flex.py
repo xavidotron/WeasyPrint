@@ -545,3 +545,57 @@ def test_flex_absolute():
       <div style="display: flex; position: absolute">
         <div>a</div>
       </div>''')
+
+
+@assert_no_logs
+def test_flex_percent_height():
+    page, = render_pages('''
+      <style>
+        .a { height: 10px; width: 10px; }
+        .b { height: 10%; width: 100%; display: flex; flex-direction: column; }
+      </style>
+      <div class="a"">
+        <div class="b"></div>
+      </div>''')
+    html, = page.children
+    body, = html.children
+    a, = body.children
+    b, = a.children
+    assert a.height == 10
+    assert b.height == 1
+
+
+@assert_no_logs
+def test_flex_percent_height_auto():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/2146
+    page, = render_pages('''
+      <style>
+        .a { width: 10px; }
+        .b { height: 10%; width: 100%; display: flex; flex-direction: column; }
+      </style>
+      <div class="a"">
+        <div class="b"></div>
+      </div>''')
+
+
+@assert_no_logs
+def test_flex_break_inside_avoid():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/2183
+    page1, page2= render_pages('''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        @page { size: 6px 4px }
+        html { font-family: weasyprint; font-size: 2px }
+      </style>
+      <article style="display: flex; flex-wrap: wrap">
+        <div>ABC</div>
+        <div style="break-inside: avoid">abc def</div>
+      </article>''')
+    html, = page1.children
+    body, = html.children
+    article, = body.children
+    div, = article.children
+    html, = page2.children
+    body, = html.children
+    article, = body.children
+    div, = article.children

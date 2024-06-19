@@ -464,6 +464,12 @@ def test_pdfa_compressed(version, pdf_version):
     _run(f'--pdf-variant=pdf/a-{version}b - -', b'test')
 
 
+def test_pdfa1b_cidset():
+    stdout = _run('--pdf-variant=pdf/a-1b --uncompressed-pdf - -', b'test')
+    assert b'PDF-1.4' in stdout
+    assert b'CIDSet' in stdout
+
+
 def test_pdfua():
     stdout = _run('--pdf-variant=pdf/ua-1 --uncompressed-pdf - -', b'test')
     assert b'part="1"' in stdout
@@ -510,6 +516,13 @@ def test_partial_pdf_custom_metadata():
     ('<input>', ['/Tx', '/V ()']),
     ('<input value="">', ['/Tx', '/V ()']),
     ('<input type="checkbox">', ['/Btn']),
+    ('<input type="radio">',
+     ['/Btn', '/V /Off', '/AS /Off', '/Ff 49152']),
+    ('<input checked type="radio" name="foo" value="value">',
+     ['/Btn', '/T (1)', '/V /dmFsdWU=', '/AS /dmFsdWU=']),
+    ('<form><input type="radio" name="foo" value="v0"></form>'
+     '<form><input checked type="radio" name="foo" value="v1"></form>',
+     ['/Btn', '/AS /djE=', '/V /djE=', '/AS /Off', '/V /Off']),
     ('<textarea></textarea>', ['/Tx', '/V ()']),
     ('<select><option value="a">A</option></select>', ['/Ch', '/Opt']),
     ('<select>'
@@ -525,7 +538,8 @@ def test_partial_pdf_custom_metadata():
 def test_pdf_inputs(html, fields):
     stdout = _run('--pdf-forms --uncompressed-pdf - -', html.encode())
     assert b'AcroForm' in stdout
-    assert all(field.encode() in stdout for field in fields)
+    for field in fields:
+        assert field.encode() in stdout
     stdout = _run('--uncompressed-pdf - -', html.encode())
     assert b'AcroForm' not in stdout
 

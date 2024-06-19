@@ -3,7 +3,7 @@
 from math import floor, inf
 
 from .absolute import absolute_layout
-from .percent import resolve_percentages
+from .percent import percentage, resolve_percentages
 
 
 def columns_layout(context, box, bottom_space, skip_stack, containing_block,
@@ -17,7 +17,6 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
     style = box.style
     width = style['column_width']
     count = style['column_count']
-    gap = style['column_gap']
     height = style['height']
     original_bottom_space = bottom_space
     context.in_column = True
@@ -41,6 +40,12 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
     # TODO: the columns container width can be unknown if the containing block
     # needs the size of this block to know its own size
     block_level_width(box, containing_block)
+
+    if style['column_gap'] == 'normal':
+        # 1em because in column context
+        gap = style['font_size']
+    else:
+        gap = percentage(style['column_gap'], box.width)
 
     # Define the number of columns and their widths
     if width == 'auto' and count != 'auto':
@@ -301,6 +306,7 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
                     containing_block, original_page_is_empty, absolute_boxes,
                     fixed_boxes, None, discard=False, max_lines=None))
             if new_child is None:
+                columns = []
                 break_page = True
                 break
             next_page = column_next_page

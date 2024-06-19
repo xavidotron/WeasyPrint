@@ -7,6 +7,7 @@ from .absolute import AbsolutePlaceholder, absolute_layout
 from .column import columns_layout
 from .flex import flex_layout
 from .float import avoid_collisions, float_layout, get_clearance
+from .grid import grid_layout
 from .inline import iter_line_boxes
 from .min_max import handle_min_max_width
 from .percent import resolve_percentages, resolve_position_percentages
@@ -79,6 +80,10 @@ def block_level_layout_switch(context, box, bottom_space, skip_stack,
         result = block_replaced_box_layout(context, box, containing_block)
     elif isinstance(box, boxes.FlexBox):
         result = flex_layout(
+            context, box, bottom_space, skip_stack, containing_block,
+            page_is_empty, absolute_boxes, fixed_boxes)
+    elif isinstance(box, boxes.GridBox):
+        result = grid_layout(
             context, box, bottom_space, skip_stack, containing_block,
             page_is_empty, absolute_boxes, fixed_boxes)
     else:  # pragma: no cover
@@ -270,6 +275,7 @@ def _out_of_flow_layout(context, box, index, child, new_children,
             last_in_flow_child = find_last_in_flow_child(new_children)
             page_break = block_level_page_break(last_in_flow_child, child)
             resume_at = {index: None}
+            out_of_flow_resume_at = None
             stop = True
             if new_children and avoid_page_break(page_break, context):
                 # Can’t break inside float, find an earlier page break.
@@ -278,7 +284,7 @@ def _out_of_flow_layout(context, box, index, child, new_children,
                 if result:
                     # Earlier page break found, drop whole child rendering.
                     new_children[:], resume_at = result
-                    new_child = out_of_flow_resume_at = None
+                    new_child = None
 
     # Running element layout.
     elif child.is_running():
@@ -296,6 +302,7 @@ def _break_line(context, box, line, new_children, lines_iterator,
     if over_orphans < 0 and not page_is_empty:
         # Reached the bottom of the page before we had
         # enough lines for orphans, cancel the whole box.
+        remove_placeholders(context, line.children, absolute_boxes, fixed_boxes)
         return True, False, resume_at
     # How many lines we need on the next page to satisfy widows
     # -1 for the current line.
@@ -307,6 +314,7 @@ def _break_line(context, box, line, new_children, lines_iterator,
                 break
     if needed > over_orphans and not page_is_empty:
         # Total number of lines < orphans + widows
+        remove_placeholders(context, line.children, absolute_boxes, fixed_boxes)
         return True, False, resume_at
     if needed and needed <= over_orphans:
         # Remove lines to keep them for the next page
@@ -644,7 +652,8 @@ def block_container_layout(context, box, bottom_space, skip_stack,
 
     collapsing_with_children = not (
         box.border_top_width or box.padding_top or box.is_flex_item or
-        establishes_formatting_context(box) or box.is_for_root_element)
+        box.is_grid_item or establishes_formatting_context(box) or
+        box.is_for_root_element)
     if collapsing_with_children:
         # Not counting margins in adjoining_margins, if any
         # (there are not padding or borders, see above)
@@ -758,10 +767,9 @@ def block_container_layout(context, box, bottom_space, skip_stack,
     if (box_is_fragmented and
             avoid_page_break(box.style['break_inside'], context) and
             not page_is_empty):
-        for footnote in all_footnotes:
-            context.unlayout_footnote(footnote)
-        return (
-            None, None, {'break': 'any', 'page': None}, [], False, max_lines)
+        remove_placeholders(
+            context, [*new_children, *box.children[skip:]], absolute_boxes, fixed_boxes)
+        return None, None, {'break': 'any', 'page': None}, [], False, max_lines
 
     for key, value in broken_out_of_flow.items():
         context.broken_out_of_flow[key] = value

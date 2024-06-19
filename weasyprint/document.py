@@ -28,6 +28,7 @@ class Page:
     instantiated directly.
 
     """
+
     def __init__(self, page_box):
         #: The page width, including margins, in CSS pixels.
         self.width = page_box.margin_width()
@@ -67,14 +68,15 @@ class Page:
         #: ``(x, y)`` point in CSS pixels from the top-left of the page.
         self.anchors = {}
 
-        #: The :obj:`list` of ``(element, attributes, rectangle)`` :obj:`tuples
-        #: <tuple>`. A ``rectangle`` is ``(x, y, width, height)``, in CSS
+        #: The :obj:`dict` mapping form elements to a list
+        #: of ``(element, attributes, rectangle)`` :obj:`tuples <tuple>`.
+        #: A ``rectangle`` is ``(x, y, width, height)``, in CSS
         #: pixels from the top-left of the page. ``atributes`` is a
         #: :obj:`dict` of HTML tag attributes and values.
-        self.inputs = []
+        #: The key ``None`` will contain inputs that are not part of a form.
+        self.forms = {None: []}
 
-        gather_anchors(
-            page_box, self.anchors, self.links, self.bookmarks, self.inputs)
+        gather_anchors(page_box, self.anchors, self.links, self.bookmarks, self.forms)
         self._page_box = page_box
 
     def paint(self, stream, scale=1):
@@ -105,6 +107,7 @@ class DocumentMetadata:
     New attributes may be added in future versions of WeasyPrint.
 
     """
+
     def __init__(self, title=None, authors=None, description=None,
                  keywords=None, generator=None, created=None, modified=None,
                  attachments=None, lang=None, custom=None):
@@ -143,7 +146,7 @@ class DocumentMetadata:
         #: Extracted from the ``<meta name=dcterms.modified>`` element in HTML
         #: and written to the ``/ModDate`` info field in PDF.
         self.modified = modified
-        #: A list of :class:`attachments <Attachment>`, empty by default.
+        #: A list of :class:`attachments <weasyprint.Attachment>`, empty by default.
         #: Extracted from the ``<link rel=attachment>`` elements in HTML
         #: and written to the ``/EmbeddedFiles`` dictionary in PDF.
         self.attachments = attachments or []
@@ -162,6 +165,7 @@ class DiskCache:
     (i.e. RasterImage instances) are still stored in memory.
 
     """
+
     def __init__(self, folder):
         self._path = Path(folder)
         self._path.mkdir(parents=True, exist_ok=True)
@@ -388,21 +392,23 @@ class Document:
         new_options = DEFAULT_OPTIONS.copy()
         new_options.update(options)
         options = new_options
+
+        # Set default PDF version for PDF variants.
+        if variant := options['pdf_variant']:
+            _, properties = VARIANTS[variant]
+            if 'version' in properties and not options['pdf_version']:
+                options['pdf_version'] = properties['version']
+            if 'identifier' in properties and not options['pdf_identifier']:
+                options['pdf_identifier'] = properties['identifier']
+
         pdf = generate_pdf(self, target, zoom, **options)
+
+        if finisher:
+            finisher(self, pdf)
 
         identifier = options['pdf_identifier']
         compress = not options['uncompressed_pdf']
         version = options['pdf_version']
-        variant = options['pdf_variant']
-
-        # Set default PDF version for PDF variants.
-        if version is None and variant:
-            _, properties = VARIANTS[variant]
-            if 'version' in properties:
-                version = properties['version']
-
-        if finisher:
-            finisher(self, pdf)
 
         if target is None:
             output = io.BytesIO()

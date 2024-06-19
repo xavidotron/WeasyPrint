@@ -546,3 +546,95 @@ def test_border_image_width(assert_pixels):
       </style>
       <div></div>
     ''')
+
+
+@assert_no_logs
+def test_border_image_gradient(assert_pixels):
+    assert_pixels('''
+        __________
+        _RRRRRRRR_
+        _RRRRRRRR_
+        _RR____RR_
+        _BB____BB_
+        _BBBBBBBB_
+        _BBBBBBBB_
+        __________
+    ''', '''
+      <style>
+        @page {
+          size: 10px 8px;
+        }
+        div {
+          border: 1px solid black;
+          border-image-source: linear-gradient(to bottom, red, red 50%, blue 50%, blue);
+          border-image-slice: 25%;
+          border-image-width: 2;
+          height: 4px;
+          margin: 1px;
+          width: 6px;
+        }
+      </style>
+      <div></div>
+    ''')
+
+
+@assert_no_logs
+def test_mask_border(assert_pixels):
+    assert_pixels('''
+        __________
+        __RR__RRR_
+        _R______R_
+        _R______R_
+        _s______R_
+        _s______R_
+        _R______R_
+        _R______R_
+        __RRRRRRR_
+        __________
+    ''', '''
+      <style>
+        @page {
+          size: 10px 10px;
+        }
+        div {
+          background: red;
+          mask-border-source: url(mask.svg);
+          mask-border-slice: 20%;
+          height: 8px;
+          width: 8px;
+          margin: 1px;
+        }
+      </style>
+      <div></div>
+    ''')
+
+
+@assert_no_logs
+def test_mask_border_fill(assert_pixels):
+    assert_pixels('''
+        __________
+        __RR__RRR_
+        _RRRRRRRR_
+        _RRRRRRRR_
+        _sRR__RRR_
+        _sRR__RRR_
+        _RRRRRRRR_
+        _RRRRRRRR_
+        __RRRRRRR_
+        __________
+    ''', '''
+      <style>
+        @page {
+          size: 10px 10px;
+        }
+        div {
+          background: red;
+          mask-border-source: url(mask.svg);
+          mask-border-slice: 20% fill;
+          height: 8px;
+          width: 8px;
+          margin: 1px;
+        }
+      </style>
+      <div></div>
+    ''')

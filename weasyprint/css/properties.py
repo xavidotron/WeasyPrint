@@ -77,6 +77,17 @@ INITIAL_VALUES = {
         Dimension(0, None), Dimension(0, None),
         Dimension(0, None), Dimension(0, None)),
     'border_image_repeat': ('stretch', 'stretch'),
+    'mask_border_source': ('none', None),
+    'mask_border_slice': (
+        Dimension(100, '%'), Dimension(100, '%'),
+        Dimension(100, '%'), Dimension(100, '%'),
+        None),
+    'mask_border_width': ('auto', 'auto', 'auto', 'auto'),
+    'mask_border_outset': (
+        Dimension(0, None), Dimension(0, None),
+        Dimension(0, None), Dimension(0, None)),
+    'mask_border_repeat': ('stretch', 'stretch'),
+    'mask_border_mode': 'alpha',
 
 
     # Color 3 (REC): https://www.w3.org/TR/css-color-3/
@@ -85,7 +96,6 @@ INITIAL_VALUES = {
     # Multi-column Layout (WD): https://www.w3.org/TR/css-multicol-1/
     'column_width': 'auto',
     'column_count': 'auto',
-    'column_gap': Dimension(1, 'em'),
     'column_rule_color': 'currentColor',
     'column_rule_style': 'none',
     'column_rule_width': 'medium',
@@ -183,16 +193,34 @@ INITIAL_VALUES = {
     'width': 'auto',
 
     # Flexible Box Layout Module 1 (CR): https://www.w3.org/TR/css-flexbox-1/
-    'align_content': 'stretch',
-    'align_items': 'stretch',
-    'align_self': 'auto',
     'flex_basis': 'auto',
     'flex_direction': 'row',
     'flex_grow': 0,
     'flex_shrink': 1,
     'flex_wrap': 'nowrap',
-    'justify_content': 'flex-start',
+
+    # Grid Layout Module Level 2 (CR): https://www.w3.org/TR/css-grid-2/
+    'grid_auto_columns': ('auto',),
+    'grid_auto_flow': ('row',),
+    'grid_auto_rows': ('auto',),
+    'grid_template_areas': 'none',
+    'grid_template_columns': 'none',
+    'grid_template_rows': 'none',
+    'grid_row_start': 'auto',
+    'grid_column_start': 'auto',
+    'grid_row_end': 'auto',
+    'grid_column_end': 'auto',
+
+    # CSS Box Alignment Module Level 3 (WD): https://www.w3.org/TR/css-align-3/
+    'align_content': ('normal',),
+    'align_items': ('normal',),
+    'align_self': ('auto',),
+    'justify_content': ('normal',),
+    'justify_items': ('normal',),
+    'justify_self': ('auto',),
     'order': 0,
+    'column_gap': 'normal',
+    'row_gap': 'normal',
 
     # Text Decoration Module 3 (CR): https://www.w3.org/TR/css-text-decor-3/
     'text_decoration_line': 'none',
@@ -296,7 +324,6 @@ TABLE_WRAPPER_BOX_PROPERTIES = {
     'bottom',
     'break_after',
     'break_before',
-    'break_inside',
     'clear',
     'counter_increment',
     'counter_reset',

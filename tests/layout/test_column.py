@@ -43,7 +43,7 @@ def test_columns(css):
     ('normal', 16),  # "normal" is 1em = 16px
     ('unknown', 16),  # default value is normal
     ('15px', 15),
-    ('40%', 16),  # percentages are not allowed
+    ('5%', 15),
     ('-1em', 16),  # negative values are not allowed
 ))
 def test_column_gap(value, width):
@@ -1057,3 +1057,29 @@ def test_columns_regression_6():
       </style>
       <div style="columns: 2; column-width: 100px; width: 10px">abc def</div>
     ''')
+
+
+@assert_no_logs
+def test_columns_regression_7():
+    page1, page2 = render_pages('''
+      <style>
+        @page { size: 50px 10px }
+        body { font-size: 2px; line-height: 1 }
+      </style>
+      <div style="height: 8px"></div>
+      <div style="column-count: 2">
+        <div>a</div>
+        <div style="break-inside: avoid">b<br>c<br>d</div>
+      </div>
+    ''')
+    html, = page1.children
+    body, = html.children
+    div, = body.children
+    assert div.position_y == 0
+    assert not div.children
+    html, = page2.children
+    body, = html.children
+    div, = body.children
+    column1, column2 = div.children
+    assert column1.position_y == 0
+    assert column2.position_y == 0
